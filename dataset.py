@@ -4,6 +4,7 @@ import glob
 from PIL import Image
 import numpy as np
 import torch
+import torchvision.transforms as transforms
 
 from util import DEVICE
 
@@ -18,6 +19,13 @@ def find_files(dir, exts=['*.png', '*.jpg']):
         return files_grabbed
     else:
         return []
+
+def img_transform(image):
+    image_transforms = transforms.Compose([
+        transforms.ToTensor(),
+    ])
+    image = image_transforms(image)
+    return image
 
 class SceneDataset(Dataset):
     def __init__(self, root, scene):
@@ -41,7 +49,7 @@ class SceneDataset(Dataset):
         
         ext = torch.FloatTensor(np.load(ext_path))
         uv = torch.FloatTensor(np.load(uv_path))
-        img = torch.FloatTensor(np.array(Image.open(img_path)))
+        img = img_transform(Image.open(img_path))
         
         ext = ext.to(device=DEVICE)
         uv = uv.to(device=DEVICE)

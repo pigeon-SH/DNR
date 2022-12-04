@@ -49,13 +49,4 @@ class Model(nn.Module):
         SH = self._spherical_harmonics_basis(ext).unsqueeze(-1).unsqueeze(-1)
         sampled_texture[:, 3:12, ...] = sampled_texture[:, 3:12, ...] * SH
         rgb = self.unet(sampled_texture)
-        rgb = rgb.permute((0, 2, 3, 1))
         return rgb
-
-    def cuda(self):
-        self.texture.cuda()
-        self.unet.cuda()
-    
-    def cpu(self):
-        self.texture.cuda()
-        self.unet.cuda()
