@@ -1,50 +1,42 @@
-from torch.utils.data import Dataset
-import os
-import glob
-from PIL import Image
 import numpy as np
+import os
+from PIL import Image
+from torch.utils.data import Dataset
+import torchvision.transforms as transforms
 import torch
 
-from util import DEVICE
+def img_transform(image):
+    image_transforms = transforms.Compose([
+        transforms.ToTensor(),
+    ])
+    image = image_transforms(image)
+    return image
 
-def find_files(dir, exts=['*.png', '*.jpg']):
-    if os.path.isdir(dir):
-        # types should be ['*.png', '*.jpg'] or ['*.npy']
-        files_grabbed = []
-        for ext in exts:
-            files_grabbed.extend(glob.glob(os.path.join(dir, ext)))
-        if len(files_grabbed) > 0:
-            files_grabbed = sorted(files_grabbed)
-        return files_grabbed
-    else:
-        return []
 
-class SceneDataset(Dataset):
-    def __init__(self, root, scene):
-        self.ext_dir = os.path.join(root, scene, "extrinsics")
-        self.uv_dir = os.path.join(root, scene, "uv")
-        self.img_dir = os.path.join(root, scene, "frame")
-        self.ext_files = find_files(self.ext_dir, exts=['*.npy'])        
-        self.uv_files = find_files(self.uv_dir, exts=['*.npy'])
-        self.img_files = find_files(self.img_dir, exts=['*.jpg', '*.png'])
-        
+def map_transform(map):
+    map = torch.from_numpy(map)
+    return map
+
+
+class UVDataset(Dataset):
+
+    def __init__(self, dir, view_direction=True):
+        self.idx_list = ['{:04d}'.format(i) for i in range(899)]
+        self.dir = dir
+        self.view_direction = view_direction
+
     def __len__(self):
-        return len(self.ext_files)
+        return len(self.idx_list)
 
     def __getitem__(self, idx):
-        #ext_path = os.path.join(self.ext_dir, self.ext_files[idx])
-        #uv_path = os.path.join(self.uv_dir, self.uv_files[idx])
-        #img_path = os.path.join(self.img_dir, self.img_files[idx])
-        ext_path = self.ext_files[idx]
-        uv_path = self.uv_files[idx]
-        img_path = self.img_files[idx]
-        
-        ext = torch.FloatTensor(np.load(ext_path))
-        uv = torch.FloatTensor(np.load(uv_path))
-        img = torch.FloatTensor(np.array(Image.open(img_path)))
-        
-        ext = ext.to(device=DEVICE)
-        uv = uv.to(device=DEVICE)
-        img = img.to(device=DEVICE)
-        
-        return ext, uv, img
+        img = np.array(Image.open(os.path.join(self.dir, 'frame/'+self.idx_list[idx]+'.png'), 'r'))
+        uv_map = np.load(os.path.join(self.dir, 'uv/'+self.idx_list[idx]+'.npy'))
+        nan_pos = np.isnan(uv_map)
+        uv_map[nan_pos] = 0
+        if np.any(np.isnan(uv_map)):
+            print('nan in dataset')
+        if np.any(np.isinf(uv_map)):
+            print('inf in dataset')
+        extrinsics = np.load(os.path.join(self.dir, 'extrinsics/'+self.idx_list[idx]+'.npy'))
+        img, uv_map = img_transform(img), map_transform(uv_map)
+        return extrinsics, uv_map, img

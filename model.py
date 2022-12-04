@@ -1,8 +1,7 @@
-import torch
 import math
 import numpy as np
+import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from texture import NeuralTexture
 from unet import UNet
@@ -10,11 +9,14 @@ from util import DEVICE
 
 
 class Model(nn.Module):
-    def __init__(self, texH, texW, n_feat, n_level):
+    def __init__(self, W, H, feature_num, use_pyramid=True, view_direction=True):
         super(Model, self).__init__()
-        self.texture = NeuralTexture(texH, texW, n_feat, n_level).to(device=DEVICE)
-        self.unet = UNet(n_feat, 3).to(device=DEVICE)
-    
+        self.feature_num = feature_num
+        self.use_pyramid = use_pyramid
+        self.view_direction = view_direction
+        self.texture = NeuralTexture(W, H, feature_num, use_pyramid)
+        self.unet = UNet(feature_num, 3).to(device=DEVICE)
+
     def _spherical_harmonics_basis(self, extrinsics):
         '''
         extrinsics: a tensor shaped (N, 3)
@@ -37,25 +39,19 @@ class Model(nn.Module):
         sh_bands[:, 5] = extrinsics[:, 1] * extrinsics[:, 2] * coff_2
         sh_bands[:, 6] = (3.0 * extrinsics[:, 2] * extrinsics[:, 2] - 1.0) * coff_3
         sh_bands[:, 7] = extrinsics[:, 2] * extrinsics[:, 0] * coff_2
-        sh_bands[:, 8] = (extrinsics[:, 0] * extrinsics[:, 0] - extrinsics[:, 1] * extrinsics[:, 1]) * coff_2   # changed 2 to 1 from unoffical github
+        sh_bands[:, 8] = (extrinsics[:, 0] * extrinsics[:, 0] - extrinsics[:, 2] * extrinsics[:, 2]) * coff_2
         return sh_bands
-    
-    def forward(self, uv, ext):
-        """
-        uv: (N, H, W, 2)
-        ext: (N, 3)
-        """
-        sampled_texture = self.texture(uv)
-        SH = self._spherical_harmonics_basis(ext).unsqueeze(-1).unsqueeze(-1)
-        sampled_texture[:, 3:12, ...] = sampled_texture[:, 3:12, ...] * SH
-        rgb = self.unet(sampled_texture)
-        rgb = rgb.permute((0, 2, 3, 1))
-        return rgb
 
-    def cuda(self):
-        self.texture.cuda()
-        self.unet.cuda()
-    
-    def cpu(self):
-        self.texture.cuda()
-        self.unet.cuda()
+    def forward(self, *args):
+        if self.view_direction:
+            uv_map, extrinsics = args
+            x = self.texture(uv_map)
+            assert x.shape[1] >= 12
+            basis = self._spherical_harmonics_basis(extrinsics).cuda()
+            basis = basis.view(basis.shape[0], basis.shape[1], 1, 1)
+            x[:, 3:12, :, :] = x[:, 3:12, :, :] * basis
+        else:
+            uv_map = args[0]
+            x = self.texture(uv_map)
+        y = self.unet(x)
+        return y
