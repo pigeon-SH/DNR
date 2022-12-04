@@ -37,7 +37,7 @@ class SceneDataset(Dataset):
         self.img_files = find_files(self.img_dir, exts=['*.jpg', '*.png'])
         
     def __len__(self):
-        return len(self.idx_list)
+        return len(self.ext_files)
 
     def __getitem__(self, idx):
         #ext_path = os.path.join(self.ext_dir, self.ext_files[idx])
