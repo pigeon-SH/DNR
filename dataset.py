@@ -28,13 +28,27 @@ def img_transform(image):
     return image
 
 class SceneDataset(Dataset):
-    def __init__(self, root, scene):
+    def __init__(self, root, scene, split):
         self.ext_dir = os.path.join(root, scene, "extrinsics")
         self.uv_dir = os.path.join(root, scene, "uv")
         self.img_dir = os.path.join(root, scene, "frame")
         self.ext_files = find_files(self.ext_dir, exts=['*.npy'])        
         self.uv_files = find_files(self.uv_dir, exts=['*.npy'])
         self.img_files = find_files(self.img_dir, exts=['*.jpg', '*.png'])
+
+        train_idx = round(len(self.ext_files) * 0.9)
+
+        if split == "train":
+            self.ext_files = self.ext_files[:train_idx]
+            self.uv_files = self.uv_files[:train_idx]
+            self.img_files = self.img_files[:train_idx]
+        elif split == "test":
+            self.ext_files = self.ext_files[train_idx:]
+            self.uv_files = self.uv_files[train_idx:]
+            self.img_files = self.img_files[train_idx:]
+        else:
+            raise ValueError("SceneDataset split wrong")
+                
         
     def __len__(self):
         return len(self.ext_files)

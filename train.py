@@ -18,7 +18,7 @@ def train(batch_size, n_epochs=50000, lr=0.001):
     save_iter = 10000
     log_file = open(os.path.join(log_dir, "train_loss.txt"), "w")
     
-    dataset = SceneDataset('./data', 'basketball')
+    dataset = SceneDataset('./data', 'basketball', split="train")
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
     
     model = Model(1024, 1024, 16, 4)
