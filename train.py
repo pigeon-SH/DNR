@@ -15,7 +15,7 @@ def train(batch_size, n_epochs=50000, lr=0.001):
         os.makedirs(save_dir, exist_ok=True)
         
     log_iter = 10
-    save_iter = n_epochs // 5
+    save_iter = 10000
     log_file = open(os.path.join(log_dir, "train_loss.txt"), "w")
     
     dataset = SceneDataset('./data', 'basketball')
@@ -29,7 +29,7 @@ def train(batch_size, n_epochs=50000, lr=0.001):
     iters = 0
     
     print("TRAIN START")
-    while iters < global_iter:
+    while iters < global_iter + 1:
         for idx, data in enumerate(dataloader):
             iters += 1
             ext, uv, gt_img = data
