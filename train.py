@@ -40,13 +40,13 @@ def train(batch_size, n_epochs=50000, lr=0.001):
             loss.backward()
             optimizer.step()
         
-            if iters >= global_iter:
-                break
             if iters % log_iter == 0:
                 print("step:{:6d}   loss:{:6.3f}".format(iters, loss.item()))
                 log_file.write("step:{:6d}   loss:{:6.3f}\n".format(iters, loss.item()))
             if iters % save_iter == 0:
                 torch.save(model, os.path.join(save_dir, "model_{}.pt".format(iters)))
+            if iters >= global_iter:
+                break
     
     print("TRAIN DONE")
 

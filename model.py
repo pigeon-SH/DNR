@@ -48,7 +48,7 @@ class Model(nn.Module):
         ext: (N, 3)
         """
         sampled_texture = self.texture(uv)
-        SH = self._spherical_harmonics_basis(ext).unsqueeze(-1).unsqueeze(-1)
-        sampled_texture[:, 3:12, ...] = sampled_texture[:, 3:12, ...] * SH
+        #SH = self._spherical_harmonics_basis(ext).unsqueeze(-1).unsqueeze(-1)
+        #sampled_texture[:, 3:12, ...] = sampled_texture[:, 3:12, ...] * SH
         rgb = self.unet(sampled_texture)
         return rgb

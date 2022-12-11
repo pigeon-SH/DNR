@@ -1,10 +1,12 @@
 import os
 import torch
 import torch.nn.functional as F
+from torchvision.transforms.functional import to_pil_image
 import numpy as np
 
 from dataset import SceneDataset
 from model import Model
+from PIL import Image
 
 PIXEL_MAX = 255.0
 
@@ -38,6 +40,11 @@ def test():
             psnr = PSNR(pred, gt_img)
             print("step:{:6d}   psnr:{:6.3f}".format(idx, psnr.item()))
             log_file.write("step:{:6d}   psnr:{:6.3f}\n".format(idx, psnr.item()))
+            
+            pred_img = to_pil_image(pred[0], "RGB")
+            pred_img.save(os.path.join(save_dir, "{}_pred.png".format(idx)))
+            gt_img = to_pil_image(gt_img[0], "RGB")
+            gt_img.save(os.path.join(save_dir, "{}_gt.png".format(idx)))
 
 if __name__ == "__main__":
     test()

@@ -36,7 +36,7 @@ class SceneDataset(Dataset):
         self.uv_files = find_files(self.uv_dir, exts=['*.npy'])
         self.img_files = find_files(self.img_dir, exts=['*.jpg', '*.png'])
 
-        train_idx = round(len(self.ext_files) * 0.9)
+        train_idx = round(len(self.ext_files) * 0.99)
 
         if split == "train":
             self.ext_files = self.ext_files[:train_idx]
