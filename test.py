@@ -4,16 +4,11 @@ import torch.nn.functional as F
 from torchvision.transforms.functional import to_pil_image
 import numpy as np
 
+import util
 from dataset import SceneDataset
 from model import Model
 from PIL import Image
 
-PIXEL_MAX = 255.0
-
-def PSNR(pred, gt_img):
-    mse = torch.mean((pred - gt_img) ** 2)
-    psnr = 20 * torch.log10(PIXEL_MAX / torch.sqrt(mse))
-    return psnr
 
 def test():
     log_dir = "./logs"
@@ -37,7 +32,7 @@ def test():
             ext, uv, gt_img = data
             pred = model(uv, ext)
         
-            psnr = PSNR(pred, gt_img)
+            psnr = util.PSNR(pred, gt_img)
             print("step:{:6d}   psnr:{:6.3f}".format(idx, psnr.item()))
             log_file.write("step:{:6d}   psnr:{:6.3f}\n".format(idx, psnr.item()))
             
